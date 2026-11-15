@@ -40,41 +40,66 @@ K = FuncFormatter(lambda v, _: f"{v/1000:.0f}K")
 M = FuncFormatter(lambda v, _: f"{v/1e6:.0f}M")
 
 # ------------------------------------------------------------- 00a use-case cards
+PAGE, CARD, LINE, VIOLET = "#f4f3ef", "#ffffff", "#e1e0d9", "#6250d6"
 cards = [
-    ("Multi-device &\nhigh-usage homes", "\"Stream smoothly at the\nsame time\"", "730K", "48% of homes", "Usage index 124 (+24%)",
-     ["Home with >= 8 active devices", "No Mesh Wi-Fi installed", "Matched to network quality &\nspeed profile"],
-     ["Mesh Wi-Fi as hero product", "Speed upgrade (main package\nor speed add-on)"]),
-    ("CCTV expansion", "\"Always online so the home\nfeels safe at all times\"", "575K", "37% of homes", "Usage index 108 (+8%)",
-     [">= 1 camera in the home, OR", "Smart-home / IoT traffic >= 1%\nof usage (3x average)"],
-     ["Operator CCTV", "Cloud recording storage", "Mesh Wi-Fi"]),
-    ("TV box cross-sell", "\"Big-screen experience the\nwhole family can enjoy\"", "660K", "44% of homes", "Usage index 104 (+4%)",
-     ["Smart TV or third-party TV box", "No operator TV box", "Streams OTT >= 100 MB / month"],
-     ["Operator TV box + OTT packs\n(sports, movies, kids)", "Event campaigns to move\nviewing to the big screen"]),
+    ("01", "Multi-device & high-usage homes", "“Stream smoothly at the same time”", BLUE,
+     "730K", "48%", "124",
+     [">= 8 active devices in the home", "No Mesh Wi-Fi installed", "Network quality & speed profile match"],
+     ["Mesh Wi-Fi as the hero product", "Speed upgrade: plan or speed add-on"],
+     "Mesh take-up  ·  speed-upgrade rate"),
+    ("02", "CCTV expansion", "“Always online, so the home feels safe”", AQUA,
+     "575K", "37%", "108",
+     [">= 1 CCTV camera in the home, or", "Smart-home / IoT traffic >= 1% of usage", "(3x the network average)"],
+     ["Operator CCTV", "Cloud recording storage", "Mesh Wi-Fi for camera coverage"],
+     "CCTV attach rate  ·  cloud subscriptions"),
+    ("03", "TV box cross-sell", "“A big-screen experience for the family”", VIOLET,
+     "660K", "44%", "104",
+     ["Smart TV or third-party TV box", "No operator TV box", "OTT streaming >= 100 MB / month"],
+     ["Operator TV box", "OTT packs: sports, movies, kids", "Event campaigns for the big screen"],
+     "TV box sales  ·  OTT pack attach"),
 ]
-fig = plt.figure(figsize=(16, 8.4))
-fig.text(0.03, 0.94, "Use cases built from household device behaviour", fontsize=22, fontweight="bold", color=INK)
-fig.text(0.03, 0.895, "Target logic, sizing and offer for each campaign  |  rescaled figures", fontsize=12, color=INK2)
-for i, (name, quote, big, share, usage, target, offer) in enumerate(cards):
-    x0 = 0.03 + i * 0.325; w = 0.30
-    ax = fig.add_axes([x0, 0.04, w, 0.82]); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
-    ax.add_patch(FancyBboxPatch((0, 0), 1, 1, boxstyle="round,pad=0,rounding_size=0.03", fc="#ffffff", ec=GRID, lw=1.2))
-    ax.add_patch(FancyBboxPatch((0, 0.86), 1, 0.14, boxstyle="round,pad=0,rounding_size=0.03", fc=BLUE, ec=BLUE))
-    ax.add_patch(plt.Rectangle((0, 0.86), 1, 0.05, fc=BLUE, ec=BLUE))
-    ax.text(0.5, 0.93, name, ha="center", va="center", fontsize=15, fontweight="bold", color="#ffffff")
-    ax.add_patch(plt.Rectangle((0.04, 0.62), 0.92, 0.21, fc="#eef3fb", ec="none"))
-    ax.text(0.08, 0.725, quote, fontsize=11.5, style="italic", color=INK2, va="center")
-    ax.text(0.93, 0.76, big, fontsize=34, fontweight="bold", color=BLUE, ha="right", va="center")
-    ax.text(0.93, 0.675, share, fontsize=11, color=INK, ha="right", va="center")
-    ax.text(0.93, 0.638, usage, fontsize=9.5, color=INK2, ha="right", va="center")
-    y = 0.56
-    ax.text(0.06, y, "Target", fontsize=13, fontweight="bold", color=ORANGE); y -= 0.06
-    for t in target:
-        ax.text(0.08, y, "•  " + t, fontsize=11, color=INK, va="top"); y -= 0.045 * (t.count("\n") + 1) + 0.02
-    y -= 0.02
-    ax.text(0.06, y, "Offer", fontsize=13, fontweight="bold", color=ORANGE); y -= 0.06
-    for t in offer:
-        ax.text(0.08, y, "•  " + t, fontsize=11, color=INK, va="top", fontweight="bold"); y -= 0.045 * (t.count("\n") + 1) + 0.02
-fig.savefig(os.path.join(OUT, "00a_use_cases.png"), dpi=160); plt.close(fig)
+
+fig = plt.figure(figsize=(16, 8.6), facecolor=PAGE)
+fig.text(0.03, 0.935, "Use cases built from household device behaviour", fontsize=24, fontweight="bold", color=INK)
+fig.text(0.03, 0.895, "Each campaign has a target rule, a sized audience, an offer and a KPI to track", fontsize=12, color=INK2)
+fig.text(0.97, 0.935, "Portfolio recreation  ·  rescaled figures", fontsize=10, color=MUTED, ha="right")
+
+cw = (0.94 - 2 * 0.02) / 3
+for i, (num, name, quote, c, big, share, usage, target, offer, kpi) in enumerate(cards):
+    x0 = 0.03 + i * (cw + 0.02)
+    ax = fig.add_axes([x0, 0.04, cw, 0.81]); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
+    ax.add_patch(FancyBboxPatch((0, 0), 1, 1, boxstyle="round,pad=0,rounding_size=0.025", fc=CARD, ec=LINE, lw=1.2))
+    ax.add_patch(plt.Rectangle((0.0, 0.985), 1, 0.015, fc=c, ec="none"))
+    # header
+    ax.scatter([0.085], [0.915], s=1500, color=c, zorder=3)
+    ax.text(0.085, 0.913, num, ha="center", va="center", fontsize=12, fontweight="bold", color="#ffffff", zorder=4)
+    ax.text(0.16, 0.925, name, fontsize=15.5, fontweight="bold", color=INK, va="center")
+    ax.text(0.16, 0.878, quote, fontsize=11, style="italic", color=INK2, va="center")
+    # hero metrics
+    ax.add_patch(FancyBboxPatch((0.05, 0.655), 0.9, 0.17, boxstyle="round,pad=0,rounding_size=0.02", fc="#f6f8fc", ec="none"))
+    ax.text(0.09, 0.765, "TARGET HOMES", fontsize=8.5, color=MUTED, fontweight="bold")
+    ax.text(0.09, 0.695, big, fontsize=34, fontweight="bold", color=c, va="baseline")
+    for j, (lab, v) in enumerate([("OF ALL HOMES", share), ("USAGE INDEX", usage)]):
+        xx = 0.585 + j * 0.19
+        ax.text(xx, 0.765, lab, fontsize=8, color=MUTED, fontweight="bold")
+        ax.text(xx, 0.695, v, fontsize=22, fontweight="bold", color=INK, va="baseline")
+    ax.plot([0.55, 0.55], [0.68, 0.80], color=LINE, lw=1)
+    # target / offer sections with fixed rows
+    for sec, items, y0 in [("WHO WE TARGET", target, 0.585), ("WHAT WE OFFER", offer, 0.335)]:
+        ax.text(0.06, y0, sec, fontsize=10, fontweight="bold", color=ORANGE)
+        ax.plot([0.06, 0.94], [y0 - 0.02, y0 - 0.02], color=LINE, lw=1)
+        for k, t in enumerate(items):
+            yy = y0 - 0.068 - k * 0.058
+            cont = t.startswith("(")
+            if not cont:
+                ax.scatter([0.08], [yy + 0.003], s=55, color=c, zorder=3)
+            ax.text(0.11, yy, t, fontsize=11.5, color=INK2 if cont else INK, va="center",
+                    fontweight="bold" if sec == "WHAT WE OFFER" else "normal")
+    # KPI footer
+    ax.add_patch(FancyBboxPatch((0.05, 0.035), 0.9, 0.075, boxstyle="round,pad=0,rounding_size=0.015", fc="#f4f3ef", ec="none"))
+    ax.text(0.08, 0.072, "KPI", fontsize=9, fontweight="bold", color=MUTED, va="center")
+    ax.text(0.17, 0.072, kpi, fontsize=10.5, color=INK, va="center")
+fig.savefig(os.path.join(OUT, "00a_use_cases.png"), dpi=160, facecolor=PAGE); plt.close(fig)
 
 # ------------------------------------------------------------- 00b brand landscape
 fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 4.8), gridspec_kw={"width_ratios": [1.1, 1]})
