@@ -79,11 +79,9 @@ for i, (num, name, quote, c, big, share, usage, target, offer, kpi) in enumerate
     ax.add_patch(FancyBboxPatch((0.05, 0.655), 0.9, 0.17, boxstyle="round,pad=0,rounding_size=0.02", fc="#f6f8fc", ec="none"))
     ax.text(0.09, 0.765, "TARGET HOMES", fontsize=8.5, color=MUTED, fontweight="bold")
     ax.text(0.09, 0.695, big, fontsize=34, fontweight="bold", color=c, va="baseline")
-    for j, (lab, v) in enumerate([("OF ALL HOMES", share), ("USAGE INDEX", usage)]):
-        xx = 0.585 + j * 0.19
-        ax.text(xx, 0.765, lab, fontsize=8, color=MUTED, fontweight="bold")
-        ax.text(xx, 0.695, v, fontsize=22, fontweight="bold", color=INK, va="baseline")
-    ax.plot([0.55, 0.55], [0.68, 0.80], color=LINE, lw=1)
+    ax.text(0.64, 0.765, "OF ALL HOMES", fontsize=8.5, color=MUTED, fontweight="bold")
+    ax.text(0.64, 0.695, share, fontsize=26, fontweight="bold", color=INK, va="baseline")
+    ax.plot([0.58, 0.58], [0.68, 0.80], color=LINE, lw=1)
     # target / offer sections with fixed rows
     for sec, items, y0 in [("WHO WE TARGET", target, 0.585), ("WHAT WE OFFER", offer, 0.335)]:
         ax.text(0.06, y0, sec, fontsize=10, fontweight="bold", color=ORANGE)
