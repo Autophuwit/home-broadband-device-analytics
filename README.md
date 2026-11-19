@@ -59,7 +59,9 @@ The output tables are read by the campaign tools, so a failed month must not lea
 
 1. built as `<table>_NEW`,
 2. checked — not empty and at least 90% of the current table's rows; otherwise the guard query divides by zero and the script stops (`nzsql -v ON_ERROR_STOP=1`),
-3. swapped in with `RENAME`, keeping last month as `<table>_OLD` for a quick roll-back and for the drift checks.
+3. swapped in with two `RENAME`s inside one `BEGIN … COMMIT`, so readers never see the table missing, keeping last month as `<table>_OLD` for a quick roll-back and for the drift checks.
+
+The run month is a parameter (`nzsql -v RUN_MNTH=202507`); the bill month and the as-of date for customer tenure are derived from it instead of being typed into the script.
 
 ### Data quality
 
