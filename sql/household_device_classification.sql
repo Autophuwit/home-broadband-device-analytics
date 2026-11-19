@@ -4,6 +4,7 @@
      the ARPU / AOU export uses the bill of the following month and AOU at its last day
      (as in the original run: Jul-25 devices, Aug-25 bill, AOU at 2025-08-31)
    ON_ERROR_STOP matters: the load guards before each table swap stop the script on a bad build
+   First time only: run 00_setup_once.sql (adds two columns this script fills)
    ============================================================ */
 DROP TABLE TEMP_RUN_DATE IF EXISTS;
 
@@ -3160,14 +3161,8 @@ COMMIT;
    UPDATE THE INSTALL DATE AND ARPU INTO AGG TABLE
    ============================================================ */
 
--- one-off: on a re-run of the month the two columns already exist - skip the two ALTERs below
--- 1) Add INSTALL_DT as a timestamp
-ALTER TABLE SANDBOX_NZ.ADMIN.TEAM_HBB_SUBR_USAGE_ALL
-ADD COLUMN INSTALL_DT TIMESTAMP;
-
--- 2) Add TOTAL_BILL_AMNT as a numeric amount
-ALTER TABLE SANDBOX_NZ.ADMIN.TEAM_HBB_SUBR_USAGE_ALL
-ADD COLUMN TOTAL_BILL_AMNT NUMERIC(12,2);
+-- INSTALL_DT and TOTAL_BILL_AMNT are added once by 00_setup_once.sql (not here, so a re-run of the month does not
+-- stop on "column already exists"); the two UPDATEs below overwrite them, so re-running gives the same values
 
 
 -- UPDATE THE INSTALL_DT
@@ -3552,7 +3547,7 @@ WITH base AS (
       MAX(COUNT_TV_DEVICE)        AS cnt_tv,
       MAX(COUNT_CCTV_DEVICE)      AS cnt_cctv,
       MAX(COUNT_IOT_DEVICE)       AS cnt_iot,
-      MAX(COUNT_MESH_WIFI_DEVICE) AS cnt_router,
+      MAX(COUNT_MESH_WIFI_DEVICE) AS cnt_mesh,
       MAX(COUNT_WEARABLE_DEVICE)  AS cnt_wearable,
       MAX(COUNT_OTHER_DEVICE)     AS cnt_other,
       MAX(COUNT_NULL_DEVICE)      AS cnt_null
@@ -3564,7 +3559,7 @@ agg AS (
       MNTH_ID,
       CIRCUIT_ID,
       (cnt_mobile + cnt_tablet + cnt_pc + cnt_tv + cnt_cctv
-       + cnt_iot + cnt_router + cnt_wearable + cnt_other + cnt_null) AS device_total,
+       + cnt_iot + cnt_mesh + cnt_wearable + cnt_other + cnt_null) AS device_total,
       entertainment_mb
   FROM base
 ),
