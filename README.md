@@ -53,17 +53,7 @@ flowchart LR
 - **Ordered rule engine.** Specific overrides run first (exact model codes such as `rmx2189` → realme phone, `c530ws` → camera), then brand and feature patterns, then generic catch-alls. Rules were added iteratively by reviewing the largest "Other" hostnames.
 - **Reusable outputs.** A hostname → (group, brand, category) **dictionary table** can be reused as a lookup. A wide **household profile table** (device counts per group, per-brand counts, IoT categories, combination keys, operator-device flags) feeds campaign targeting directly.
 
-### Production safety
-
-The output tables are read by the campaign tools, so a failed month must not leave them empty or half-built. Each one (device dictionary, device counts per home, household profile, use-case target list) is:
-
-1. built as `<table>_NEW`,
-2. checked — not empty and at least 90% of the current table's rows; otherwise the guard query divides by zero and the script stops (`nzsql -v ON_ERROR_STOP=1`),
-3. swapped in with two `RENAME`s inside one `BEGIN … COMMIT`, so readers never see the table missing, keeping last month as `<table>_OLD` for a quick roll-back and for the drift checks.
-
-The run month is a parameter (`nzsql -v RUN_MNTH=202507`); the bill month and the as-of date for customer tenure are derived from it instead of being typed into the script. Schema changes live in [`sql/00_setup_once.sql`](sql/00_setup_once.sql), run once, so re-running a month does not stop on "column already exists".
-
-### Data quality
+### Post-validation (after the build)
 
 [`sql/dq_checks.sql`](sql/dq_checks.sql) runs after the build and returns PASS / FAIL per check, plus an *OK TO PUBLISH / HOLD* summary:
 
@@ -72,16 +62,7 @@ The run month is a parameter (`nzsql -v RUN_MNTH=202507`); the bill month and th
 | **Source → target** | Homes ≤ individual circuits in the product dimension; share of raw device records kept after cleaning within 50–80% (baseline ~65%); ≥ 80% of homes in the raw log keep at least one device |
 | **Keys** | One row per home per month; one classification per hostname in the dictionary |
 | **Classification** | ≥ 75% of devices classified; ≤ 1% NULL hostnames (a jump means the router feed stopped sending names) |
-| **Drift vs last month** | Homes ±5%, devices per home ±10%, smartphone share ±3pp — catches a feed change or a rule that suddenly moved a large group |
-
-### Performance notes
-
-The raw Wi-Fi station log is the largest input (tens of millions of device records a month), so the script keeps work local to each home:
-
-- **Distribute on the grain of the next join.** The temp tables are `DISTRIBUTE ON (MNTH_ID, CIRCUIT[, hostname])`, so de-duplication, the canonical-name ranking and the per-home counts run on one data slice without redistributing rows.
-- **Shrink before the expensive step.** Daily rows are aggregated to one row per home × hostname per month *before* the ~400 regex rules run, and the business-customer filter is a join to a small distinct list of circuits.
-- **Classify each hostname once.** The rules also produce a hostname → group / brand / category dictionary (`AUTO_HBB_MASTER_DEVICE`). The next step would be to join new months to it and run the regex rules only on hostnames not seen before.
-- **One row per key before joining.** The canonical-name step (`ROW_NUMBER() … RN = 1`) and `COUNT(DISTINCT …)` per home keep the household profile at one row per home, so the many per-group joins that build it cannot multiply rows.
+| **Drift vs the previous run** | Homes ±5%, devices per home ±10%, smartphone share ±3pp — catches a feed change or a rule that suddenly moved a large group |
 
 ➡️ Details and rule examples: [docs/device_classification.md](docs/device_classification.md) · SQL: [sql/household_device_classification.sql](sql/household_device_classification.sql)
 
@@ -159,7 +140,7 @@ Each use case combines the device profile with usage signals from the team's com
 └── sql/
     ├── 00_setup_once.sql                  # one-off: columns the monthly script fills
     ├── household_device_classification.sql
-    └── dq_checks.sql                      # data-quality checks per month
+    └── dq_checks.sql                      # post-validation checks per month
 ```
 
 **Tools:** SQL (Netezza: regex functions, window functions, MPP distribution) · Excel · PowerPoint
